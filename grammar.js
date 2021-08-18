@@ -43,30 +43,37 @@ const binary_op = [
 ];
 const dec_digits = /[0-9][0-9_]*[0-9]?/;
 const float_exp = /[eE][+-]?[0-9][0-9_]*[0-9]?/;
+const endl = /[\r\n]+/;
 module.exports = grammar({
     name: "kotlin",
     inline: ($) => [$.statement],
-    extras: ($) => [$.comment, /\s/],
+    extras: ($) => [$.comment, /\s+/],
     word: ($) => $._identifier,
     rules: {
-        source_file: ($) => seq(optional($.shebang), $.statement),
-        shebang: (_) => token(/#![^\n]*\n/),
-        comment: (_) => token(choice(/\/\*.*?\*\//, /\/\/[^\n]*\n/)),
-        statement: ($) => seq(optional($.annotation), $._statement),
+        source_file: ($) => seq(optional($.shebang), repeat($.statement)),
+        shebang: (_) => token(/#![^\r\n]*/),
+        comment: (_) => token(choice(/\/\*.*?\*\//, seq("//", /[^\r\n]*/, endl))),
+        statement: ($) => seq(optional($.annotation), $._statement, endl),
         _statement: ($) => choice($._declaration, $._expression),
         _declaration: ($) => choice($.func_decl, $.class_decl, $.object_decl),
         // Types
         _type: ($) => choice($.func_type, $.type_user, $.type_paren, $.type_null),
         func_type: ($) => seq("(", commaSep($._type), ")", "->", $._type),
         type_user: ($) => seq(optional(dotSep($.identifier)), choice("*", $.identifier)),
-        type_paren: ($) => seq("(", $.func_type, ")"),
+        type_paren: ($) => prec(PREC.PRIMARY, seq("(", $.func_type, ")")),
         type_null: ($) => seq(choice($.type_user, $.type_paren), "?"),
+        type_params: ($) => seq("<", commaSep($.type_param), ">"),
+        type_param: ($) => seq(field("name", $.identifier), optSeq(":", $._type)),
         // Annotation
         annotation: ($) => seq("@", $.identifier),
         // Declaration
-        func_decl: ($) => seq("func", field("name", $.identifier), "(", ")"),
-        class_decl: ($) => seq("class", field("name", $.identifier), optSeq(":", field("super", $.identifier))),
-        object_decl: ($) => seq("object", field("name", $.identifier)),
+        func_decl: ($) => prec.right(seq("fun", optional($.type_params), field("name", $.identifier), $.param_list, optional($.func_body), optional(field("return", $._type)))),
+        class_decl: ($) => seq("class", optional($.type_params), field("name", $.identifier), optSeq(":", field("super", $.identifier))),
+        object_decl: ($) => seq("object", optional($.type_params), field("name", $.identifier)),
+        // Function
+        param_list: ($) => seq("(", commaSep($.param_decl), ")"),
+        param_decl: ($) => seq(field("name", $.identifier), ":", field("type", $._type)),
+        func_body: ($) => choice(seq("=", $._expression), seq("{", repeat($.statement), "}")),
         // Expression
         _expression: ($) => choice($.binary_expr, $.identifier, $.integer, $.float, $.call, $.selector, $.string, "false", "true", "null"),
         binary_expr: ($) => choice(...binary_op.map(([op, precedence]) => prec.left(precedence, seq(field("left", $._expression), field("operator", op), field("right", $._expression))))),
