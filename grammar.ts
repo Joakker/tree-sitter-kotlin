@@ -111,14 +111,15 @@ export = grammar({
       choice(seq("=", $._expression), seq("{", repeat($.statement), "}")),
 
     // Class body
-    class_body: ($) => seq("{", repeat($._declaration), "}"),
+    class_body: ($) =>
+      seq("{", optional($.enum_entries), repeat($._declaration), "}"),
     property: ($) =>
       prec.right(
         seq(
           choice("var", "val"),
           field("name", $.identifier),
           optSeq(":", field("type", $._type)),
-          optSeq("=", $._expression),
+          optChoice($.delegate, seq("=", $._expression)),
           optSeq(
             endl,
             choice(
@@ -140,6 +141,14 @@ export = grammar({
         $.func_body
       ),
     getter: ($) => seq("get", optSeq("(", ")"), $.func_body),
+    delegate: ($) => seq("by", $._expression),
+    enum_entries: ($) => seq(commaSep($.enum_entry), ";"),
+    enum_entry: ($) =>
+      seq(
+        field("name", $.identifier),
+        optional($.args),
+        optional($.class_body)
+      ),
 
     // Expression
     _expression: ($) =>
@@ -171,10 +180,8 @@ export = grammar({
       ),
 
     call: ($) =>
-      prec(
-        PREC.PRIMARY,
-        seq(field("function", $._expression), "(", commaSep($._expression), ")")
-      ),
+      prec(PREC.PRIMARY, seq(field("function", $._expression), $.args)),
+    args: ($) => seq("(", commaSep($._expression), ")"),
 
     selector: ($) =>
       prec(
