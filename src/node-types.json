@@ -281,6 +281,33 @@
     }
   },
   {
+    "type": "class_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "class_decl",
+          "named": true
+        },
+        {
+          "type": "func_decl",
+          "named": true
+        },
+        {
+          "type": "object_decl",
+          "named": true
+        },
+        {
+          "type": "property",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "class_decl",
     "named": true,
     "fields": {
@@ -306,9 +333,13 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "class_body",
+          "named": true
+        },
         {
           "type": "type_params",
           "named": true
@@ -358,6 +389,10 @@
         },
         {
           "type": "object_decl",
+          "named": true
+        },
+        {
+          "type": "property",
           "named": true
         },
         {
@@ -455,6 +490,21 @@
     }
   },
   {
+    "type": "getter",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "func_body",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "identifier",
     "named": true,
     "fields": {}
@@ -491,7 +541,7 @@
     "fields": {
       "name": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "identifier",
@@ -501,7 +551,7 @@
       },
       "type": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "func_type",
@@ -521,6 +571,28 @@
           }
         ]
       }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "func_type",
+          "named": true
+        },
+        {
+          "type": "type_null",
+          "named": true
+        },
+        {
+          "type": "type_paren",
+          "named": true
+        },
+        {
+          "type": "type_user",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -533,6 +605,86 @@
       "types": [
         {
           "type": "param_decl",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "property",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "type": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "func_type",
+            "named": true
+          },
+          {
+            "type": "type_null",
+            "named": true
+          },
+          {
+            "type": "type_paren",
+            "named": true
+          },
+          {
+            "type": "type_user",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "binary_expr",
+          "named": true
+        },
+        {
+          "type": "call",
+          "named": true
+        },
+        {
+          "type": "float",
+          "named": true
+        },
+        {
+          "type": "getter",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "integer",
+          "named": true
+        },
+        {
+          "type": "selector",
+          "named": true
+        },
+        {
+          "type": "setter",
+          "named": true
+        },
+        {
+          "type": "string",
           "named": true
         }
       ]
@@ -601,6 +753,46 @@
     }
   },
   {
+    "type": "setter",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "param_decl",
+            "named": true
+          }
+        ]
+      },
+      "type": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "param_decl",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "func_body",
+          "named": true
+        },
+        {
+          "type": "param_decl",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "source_file",
     "named": true,
     "fields": {},
@@ -642,6 +834,10 @@
         },
         {
           "type": "object_decl",
+          "named": true
+        },
+        {
+          "type": "property",
           "named": true
         },
         {
@@ -1082,7 +1278,15 @@
     "named": false
   },
   {
+    "type": "val",
+    "named": false
+  },
+  {
     "type": "value",
+    "named": false
+  },
+  {
+    "type": "var",
     "named": false
   },
   {

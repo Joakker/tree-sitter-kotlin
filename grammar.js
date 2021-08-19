@@ -55,11 +55,11 @@ module.exports = grammar({
         comment: (_) => token(choice(/\/\*.*?\*\//, seq("//", /[^\r\n]*/, endl))),
         statement: ($) => seq(optional($.annotation), $._statement, endl),
         _statement: ($) => choice($._declaration, $._expression),
-        _declaration: ($) => choice($.func_decl, $.class_decl, $.object_decl),
+        _declaration: ($) => choice($.func_decl, $.class_decl, $.object_decl, $.property),
         // Types
         _type: ($) => choice($.func_type, $.type_user, $.type_paren, $.type_null),
         func_type: ($) => seq("(", commaSep($._type), ")", "->", $._type),
-        type_user: ($) => seq(optional(dotSep($.identifier)), choice("*", $.identifier)),
+        type_user: ($) => prec.left(PREC.PRIMARY, seq(optional(dotSep($.identifier)), choice("*", $.identifier))),
         type_paren: ($) => prec(PREC.PRIMARY, seq("(", $.func_type, ")")),
         type_null: ($) => seq(choice($.type_user, $.type_paren), "?"),
         type_params: ($) => seq("<", commaSep($.type_param), ">"),
@@ -68,12 +68,17 @@ module.exports = grammar({
         annotation: ($) => seq("@", $.identifier),
         // Declaration
         func_decl: ($) => prec.right(seq("fun", optional($.type_params), field("name", $.identifier), $.param_list, optional($.func_body), optional(field("return", $._type)))),
-        class_decl: ($) => seq("class", optional($.type_params), field("name", $.identifier), optSeq(":", field("super", $.identifier))),
+        class_decl: ($) => seq("class", optional($.type_params), field("name", $.identifier), optSeq(":", field("super", $.identifier)), optional($.class_body)),
         object_decl: ($) => seq("object", optional($.type_params), field("name", $.identifier)),
         // Function
         param_list: ($) => seq("(", commaSep($.param_decl), ")"),
         param_decl: ($) => seq(field("name", $.identifier), ":", field("type", $._type)),
         func_body: ($) => choice(seq("=", $._expression), seq("{", repeat($.statement), "}")),
+        // Class body
+        class_body: ($) => seq("{", repSeq($._declaration), "}"),
+        property: ($) => prec.right(seq(choice("var", "val"), field("name", $.identifier), optSeq(":", field("type", $._type)), optSeq("=", $._expression), optSeq(endl, choice(seq($.getter, optSeq(endl, $.setter)), seq($.setter, optSeq(endl, $.getter)))))),
+        setter: ($) => seq("set", "(", alias(seq(field("name", $.identifier), optSeq(":", field("type", $._type))), $.param_decl), ")", $.func_body),
+        getter: ($) => seq("get", optSeq("(", ")"), $.func_body),
         // Expression
         _expression: ($) => choice($.binary_expr, $.identifier, $.integer, $.float, $.call, $.selector, $.string, "false", "true", "null"),
         binary_expr: ($) => choice(...binary_op.map(([op, precedence]) => prec.left(precedence, seq(field("left", $._expression), field("operator", op), field("right", $._expression))))),
