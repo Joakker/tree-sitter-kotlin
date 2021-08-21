@@ -1,5 +1,3 @@
-const repChoice = (...args: RuleOrLiteral[]) => repeat(choice(...args));
-const repChoice1 = (...args: RuleOrLiteral[]) => repeat1(choice(...args));
 const optChoice = (...args: RuleOrLiteral[]) => optional(choice(...args));
 const repSeq = (...args: RuleOrLiteral[]) => repeat(seq(...args));
 const optSeq = (...args: RuleOrLiteral[]) => optional(seq(...args));
@@ -19,6 +17,7 @@ enum PREC {
   ADD,
   MUL,
   AS,
+  STMT,
   PRIMARY,
 }
 
@@ -45,12 +44,12 @@ const binary_op: Array<[RuleOrLiteral, PREC]> = [
 
 const dec_digits = /[0-9][0-9_]*[0-9]?/;
 const float_exp = /[eE][+-]?[0-9][0-9_]*[0-9]?/;
-const endl = /[\r\n]+/;
+const endl = /[\r\n;]+/;
 
 export = grammar({
   name: "kotlin",
 
-  inline: ($) => [$.statement],
+  inline: ($) => [$.statement, $.expression],
   extras: ($) => [$.comment, /\s+/],
   word: ($) => $._identifier,
 
@@ -58,8 +57,12 @@ export = grammar({
     source_file: ($) => seq(optional($.shebang), repeat($.statement)),
     shebang: (_) => token(/#![^\r\n]*/),
     comment: (_) => token(choice(/\/\*.*?\*\//, seq("//", /[^\r\n]*/, endl))),
-    statement: ($) => seq(optional($.annotation), $._statement, endl),
-    _statement: ($) => choice($._declaration, $._expression),
+    statement: ($) => seq(optional($.annotation), $._statement, optional(endl)),
+    _statement: ($) =>
+      prec.right(
+        PREC.STMT,
+        choice($._declaration, $._expression, $.block, $.for_stmt)
+      ),
     _declaration: ($) =>
       choice($.func_decl, $.class_decl, $.object_decl, $.property),
 
@@ -93,12 +96,14 @@ export = grammar({
         )
       ),
     class_decl: ($) =>
-      seq(
-        "class",
-        optional($.type_params),
-        field("name", $.identifier),
-        optSeq(":", field("super", $.identifier)),
-        optional($.class_body)
+      prec.left(
+        seq(
+          "class",
+          optional($.type_params),
+          field("name", $.identifier),
+          optSeq(":", field("super", $.identifier)),
+          choice(endl, $.class_body)
+        )
       ),
     object_decl: ($) =>
       seq("object", optional($.type_params), field("name", $.identifier)),
@@ -108,18 +113,26 @@ export = grammar({
     param_decl: ($) =>
       seq(field("name", $.identifier), ":", field("type", $._type)),
     func_body: ($) =>
-      choice(seq("=", $._expression), seq("{", repeat($.statement), "}")),
+      choice(seq("=", $.expression), seq("{", repeat($.statement), "}")),
 
     // Class body
     class_body: ($) =>
-      seq("{", optional($.enum_entries), repeat($._declaration), "}"),
+      prec.right(
+        PREC.PRIMARY,
+        seq(
+          "{",
+          optional($.enum_entries),
+          repeat(prec(PREC.PRIMARY, $._declaration)),
+          "}"
+        )
+      ),
     property: ($) =>
       prec.right(
         seq(
           choice("var", "val"),
           field("name", $.identifier),
           optSeq(":", field("type", $._type)),
-          optChoice($.delegate, seq("=", $._expression)),
+          optChoice($.delegate, seq("=", $.expression)),
           optSeq(
             endl,
             choice(
@@ -141,16 +154,40 @@ export = grammar({
         $.func_body
       ),
     getter: ($) => seq("get", optSeq("(", ")"), $.func_body),
-    delegate: ($) => seq("by", $._expression),
+    delegate: ($) => seq("by", $.expression),
     enum_entries: ($) => seq(commaSep($.enum_entry), ";"),
     enum_entry: ($) =>
-      seq(
-        field("name", $.identifier),
-        optional($.args),
-        optional($.class_body)
+      prec.left(
+        PREC.STMT,
+        seq(
+          field("name", $.identifier),
+          optional($.args),
+          optional($.class_body)
+        )
       ),
 
+    // For loop
+    for_stmt: ($) =>
+      prec.left(
+        seq(
+          "for",
+          "(",
+          choice($.var_decl, $.multivar_decl),
+          "in",
+          $.expression,
+          ")",
+          $.statement
+        )
+      ),
+    var_decl: ($) =>
+      seq(field("name", $.identifier), optSeq(":", field("type", $._type))),
+    multivar_decl: ($) => seq("(", commaSep($.var_decl), ")"),
+
+    // Block
+    block: ($) => seq("{", repeat($.statement), "}"),
+
     // Expression
+    expression: ($) => choice($._expression, $.lambda),
     _expression: ($) =>
       choice(
         $.binary_expr,
@@ -181,12 +218,23 @@ export = grammar({
 
     call: ($) =>
       prec(PREC.PRIMARY, seq(field("function", $._expression), $.args)),
-    args: ($) => seq("(", commaSep($._expression), ")"),
+    args: ($) =>
+      prec.right(choice($._comma_args, seq(optional($._comma_args), $.lambda))),
+    _comma_args: ($) => seq("(", commaSep($.expression), ")"),
 
+    lambda: ($) =>
+      prec.left(
+        seq(
+          "{",
+          optSeq(field("args", choice($.var_decl, $.multivar_decl)), "->"),
+          repeat($.statement),
+          "}"
+        )
+      ),
     selector: ($) =>
       prec(
         PREC.PRIMARY,
-        seq(field("operand", $._expression), ".", field("field", $.identifier))
+        seq(field("operand", $.expression), ".", field("field", $.identifier))
       ),
 
     identifier: ($) =>
