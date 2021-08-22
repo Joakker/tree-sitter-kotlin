@@ -61,7 +61,14 @@ export = grammar({
     _statement: ($) =>
       prec.right(
         PREC.STMT,
-        choice($._declaration, $._expression, $.block, $.for_stmt)
+        choice(
+          $._declaration,
+          $._expression,
+          $.block,
+          $.for_stmt,
+          $.while_stmt,
+          $.do_while
+        )
       ),
     _declaration: ($) =>
       choice($.func_decl, $.class_decl, $.object_decl, $.property),
@@ -182,6 +189,14 @@ export = grammar({
     var_decl: ($) =>
       seq(field("name", $.identifier), optSeq(":", field("type", $._type))),
     multivar_decl: ($) => seq("(", commaSep($.var_decl), ")"),
+
+    // While loop
+    while_stmt: ($) =>
+      prec.left(seq("while", "(", $.expression, ")", $.statement)),
+
+    // Do while loop
+    do_while: ($) =>
+      prec.left(seq("do", $.statement, "while", "(", $.expression, ")")),
 
     // Block
     block: ($) => seq("{", repeat($.statement), "}"),

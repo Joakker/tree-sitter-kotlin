@@ -53,7 +53,7 @@ module.exports = grammar({
         shebang: (_) => token(/#![^\r\n]*/),
         comment: (_) => token(choice(/\/\*.*?\*\//, seq("//", /[^\r\n]*/, endl))),
         statement: ($) => seq(optional($.annotation), $._statement, optional(endl)),
-        _statement: ($) => prec.right(PREC.STMT, choice($._declaration, $._expression, $.block, $.for_stmt)),
+        _statement: ($) => prec.right(PREC.STMT, choice($._declaration, $._expression, $.block, $.for_stmt, $.while_stmt, $.do_while)),
         _declaration: ($) => choice($.func_decl, $.class_decl, $.object_decl, $.property),
         // Types
         _type: ($) => choice($.func_type, $.type_user, $.type_paren, $.type_null),
@@ -85,6 +85,10 @@ module.exports = grammar({
         for_stmt: ($) => prec.left(seq("for", "(", choice($.var_decl, $.multivar_decl), "in", $.expression, ")", $.statement)),
         var_decl: ($) => seq(field("name", $.identifier), optSeq(":", field("type", $._type))),
         multivar_decl: ($) => seq("(", commaSep($.var_decl), ")"),
+        // While loop
+        while_stmt: ($) => prec.left(seq("while", "(", $.expression, ")", $.statement)),
+        // Do while loop
+        do_while: ($) => prec.left(seq("do", $.statement, "while", "(", $.expression, ")")),
         // Block
         block: ($) => seq("{", repeat($.statement), "}"),
         // Expression

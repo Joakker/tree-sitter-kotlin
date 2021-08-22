@@ -266,6 +266,10 @@
           "named": true
         },
         {
+          "type": "do_while",
+          "named": true
+        },
+        {
           "type": "float",
           "named": true
         },
@@ -299,6 +303,10 @@
         },
         {
           "type": "string",
+          "named": true
+        },
+        {
+          "type": "while_stmt",
           "named": true
         }
       ]
@@ -481,6 +489,85 @@
     }
   },
   {
+    "type": "do_while",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "annotation",
+          "named": true
+        },
+        {
+          "type": "binary_expr",
+          "named": true
+        },
+        {
+          "type": "block",
+          "named": true
+        },
+        {
+          "type": "call",
+          "named": true
+        },
+        {
+          "type": "class_decl",
+          "named": true
+        },
+        {
+          "type": "do_while",
+          "named": true
+        },
+        {
+          "type": "float",
+          "named": true
+        },
+        {
+          "type": "for_stmt",
+          "named": true
+        },
+        {
+          "type": "func_decl",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "integer",
+          "named": true
+        },
+        {
+          "type": "lambda",
+          "named": true
+        },
+        {
+          "type": "object_decl",
+          "named": true
+        },
+        {
+          "type": "property",
+          "named": true
+        },
+        {
+          "type": "selector",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "while_stmt",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "enum_entries",
     "named": true,
     "fields": {},
@@ -554,6 +641,10 @@
           "named": true
         },
         {
+          "type": "do_while",
+          "named": true
+        },
+        {
           "type": "float",
           "named": true
         },
@@ -600,6 +691,10 @@
         {
           "type": "var_decl",
           "named": true
+        },
+        {
+          "type": "while_stmt",
+          "named": true
         }
       ]
     }
@@ -630,6 +725,10 @@
         },
         {
           "type": "class_decl",
+          "named": true
+        },
+        {
+          "type": "do_while",
           "named": true
         },
         {
@@ -670,6 +769,10 @@
         },
         {
           "type": "string",
+          "named": true
+        },
+        {
+          "type": "while_stmt",
           "named": true
         }
       ]
@@ -822,6 +925,10 @@
           "named": true
         },
         {
+          "type": "do_while",
+          "named": true
+        },
+        {
           "type": "float",
           "named": true
         },
@@ -855,6 +962,10 @@
         },
         {
           "type": "string",
+          "named": true
+        },
+        {
+          "type": "while_stmt",
           "named": true
         }
       ]
@@ -1199,6 +1310,10 @@
           "named": true
         },
         {
+          "type": "do_while",
+          "named": true
+        },
+        {
           "type": "float",
           "named": true
         },
@@ -1236,6 +1351,10 @@
         },
         {
           "type": "string",
+          "named": true
+        },
+        {
+          "type": "while_stmt",
           "named": true
         }
       ]
@@ -1379,6 +1498,85 @@
           }
         ]
       }
+    }
+  },
+  {
+    "type": "while_stmt",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "annotation",
+          "named": true
+        },
+        {
+          "type": "binary_expr",
+          "named": true
+        },
+        {
+          "type": "block",
+          "named": true
+        },
+        {
+          "type": "call",
+          "named": true
+        },
+        {
+          "type": "class_decl",
+          "named": true
+        },
+        {
+          "type": "do_while",
+          "named": true
+        },
+        {
+          "type": "float",
+          "named": true
+        },
+        {
+          "type": "for_stmt",
+          "named": true
+        },
+        {
+          "type": "func_decl",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "integer",
+          "named": true
+        },
+        {
+          "type": "lambda",
+          "named": true
+        },
+        {
+          "type": "object_decl",
+          "named": true
+        },
+        {
+          "type": "property",
+          "named": true
+        },
+        {
+          "type": "selector",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "while_stmt",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -1531,6 +1729,10 @@
   },
   {
     "type": "delegate",
+    "named": false
+  },
+  {
+    "type": "do",
     "named": false
   },
   {
@@ -1727,6 +1929,10 @@
   },
   {
     "type": "where",
+    "named": false
+  },
+  {
+    "type": "while",
     "named": false
   },
   {
