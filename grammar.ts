@@ -4,6 +4,7 @@ const optSeq = (...args: RuleOrLiteral[]) => optional(seq(...args));
 const commaSep = (arg: RuleOrLiteral) =>
   optSeq(arg, optional(repSeq(",", arg)));
 const dotSep = (arg: RuleOrLiteral) => seq(arg, optional(repSeq(".", arg)));
+const repChoice = (...args: RuleOrLiteral[]) => repeat(choice(...args));
 
 enum PREC {
   ASSIGN,
@@ -19,6 +20,7 @@ enum PREC {
   AS,
   STMT,
   PRIMARY,
+  LABEL,
 }
 
 const binary_op: Array<[RuleOrLiteral, PREC]> = [
@@ -38,8 +40,9 @@ const binary_op: Array<[RuleOrLiteral, PREC]> = [
   ["+", PREC.ADD],
   ["-", PREC.ADD],
   ["*", PREC.MUL],
+  ["%", PREC.MUL],
   ["/", PREC.MUL],
-  ["as", PREC.AS],
+  [choice("as", "as?"), PREC.AS],
 ];
 
 const dec_digits = /[0-9][0-9_]*[0-9]?/;
@@ -57,13 +60,15 @@ export = grammar({
     source_file: ($) => seq(optional($.shebang), repeat($.statement)),
     shebang: (_) => token(/#![^\r\n]*/),
     comment: (_) => token(choice(/\/\*.*?\*\//, seq("//", /[^\r\n]*/, endl))),
-    statement: ($) => seq(optional($.annotation), $._statement, optional(endl)),
+    statement: ($) =>
+      seq(repChoice($.annotation, $.label), $._statement, optional(endl)),
     _statement: ($) =>
       prec.right(
         PREC.STMT,
         choice(
           $._declaration,
           $._expression,
+          $.import_stmt,
           $.block,
           $.for_stmt,
           $.while_stmt,
@@ -72,6 +77,12 @@ export = grammar({
       ),
     _declaration: ($) =>
       choice($.func_decl, $.class_decl, $.object_decl, $.property),
+
+    // Label
+    label: ($) => prec.left(PREC.LABEL, seq(field("name", $.identifier), "@")),
+
+    // Import
+    import_stmt: ($) => prec.left(PREC.PRIMARY, seq("import", $.type_proj)),
 
     // Types
     _type: ($) => choice($.func_type, $.type_user, $.type_paren, $.type_null),
@@ -87,6 +98,14 @@ export = grammar({
     type_params: ($) => seq("<", commaSep($.type_param), ">"),
     type_param: ($) => seq(field("name", $.identifier), optSeq(":", $._type)),
 
+    type_proj: ($) =>
+      prec.left(
+        seq(
+          optional(dotSep($.identifier)),
+          choice(field("type", $.identifier), "*")
+        )
+      ),
+
     // Annotation
     annotation: ($) => seq("@", $.identifier),
 
@@ -98,8 +117,8 @@ export = grammar({
           optional($.type_params),
           field("name", $.identifier),
           $.param_list,
-          optional($.func_body),
-          optional(field("return", $._type))
+          optional(field("return", $._type)),
+          optional($.func_body)
         )
       ),
     class_decl: ($) =>
@@ -192,11 +211,22 @@ export = grammar({
 
     // While loop
     while_stmt: ($) =>
-      prec.left(seq("while", "(", $.expression, ")", $.statement)),
+      prec.left(
+        seq("while", "(", field("condition", $.expression), ")", $.statement)
+      ),
 
     // Do while loop
     do_while: ($) =>
-      prec.left(seq("do", $.statement, "while", "(", $.expression, ")")),
+      prec.left(
+        seq(
+          "do",
+          $.statement,
+          "while",
+          "(",
+          field("condition", $.expression),
+          ")"
+        )
+      ),
 
     // Block
     block: ($) => seq("{", repeat($.statement), "}"),
@@ -204,18 +234,29 @@ export = grammar({
     // Expression
     expression: ($) => choice($._expression, $.lambda),
     _expression: ($) =>
-      choice(
-        $.binary_expr,
-        $.identifier,
-        $.integer,
-        $.float,
-        $.call,
-        $.selector,
-        $.string,
-        "false",
-        "true",
-        "null"
+      prec(
+        PREC.PRIMARY,
+        choice(
+          $.paren_expr,
+          $.binary_expr,
+          $.try_expr,
+          $.throw_expr,
+          $.return_expr,
+          $.continue_expr,
+          $.break_expr,
+          $.identifier,
+          $.integer,
+          $.float,
+          $.call,
+          $.selector,
+          $.string,
+          "false",
+          "true",
+          "null"
+        )
       ),
+
+    paren_expr: ($) => seq("(", $._expression, ")"),
 
     binary_expr: ($) =>
       choice(
@@ -231,11 +272,55 @@ export = grammar({
         )
       ),
 
+    try_expr: ($) =>
+      prec.left(
+        seq(
+          "try",
+          $.block,
+          choice(
+            seq(repeat1($.catch_block), optional($.finally_block)),
+            $.finally_block
+          )
+        )
+      ),
+    catch_block: ($) =>
+      seq(
+        "catch",
+        "(",
+        repeat($.annotation),
+        $.identifier,
+        ":",
+        $._type,
+        optional(","),
+        ")",
+        $.block
+      ),
+    finally_block: ($) => seq("finally", $.block),
+
+    throw_expr: ($) => seq("throw", $.expression),
+
+    return_expr: ($) =>
+      prec.left(
+        seq(
+          choice("return", seq("return@", field("label", $.identifier))),
+          optional($.expression)
+        )
+      ),
+
+    continue_expr: ($) =>
+      choice("continue", seq("continue@", field("label", $.identifier))),
+
+    break_expr: ($) =>
+      choice("break", seq("break@", field("label", $.identifier))),
+
     call: ($) =>
       prec(PREC.PRIMARY, seq(field("function", $._expression), $.args)),
     args: ($) =>
       prec.right(choice($._comma_args, seq(optional($._comma_args), $.lambda))),
     _comma_args: ($) => seq("(", commaSep($.expression), ")"),
+
+    access_expr: ($) =>
+      prec.left(PREC.PRIMARY, seq($.expression, field("field", $.identifier))),
 
     lambda: ($) =>
       prec.left(

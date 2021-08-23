@@ -4,6 +4,7 @@ const repSeq = (...args) => repeat(seq(...args));
 const optSeq = (...args) => optional(seq(...args));
 const commaSep = (arg) => optSeq(arg, optional(repSeq(",", arg)));
 const dotSep = (arg) => seq(arg, optional(repSeq(".", arg)));
+const repChoice = (...args) => repeat(choice(...args));
 var PREC;
 (function (PREC) {
     PREC[PREC["ASSIGN"] = 0] = "ASSIGN";
@@ -19,6 +20,7 @@ var PREC;
     PREC[PREC["AS"] = 10] = "AS";
     PREC[PREC["STMT"] = 11] = "STMT";
     PREC[PREC["PRIMARY"] = 12] = "PRIMARY";
+    PREC[PREC["LABEL"] = 13] = "LABEL";
 })(PREC || (PREC = {}));
 const binary_op = [
     ["||", PREC.OR],
@@ -37,8 +39,9 @@ const binary_op = [
     ["+", PREC.ADD],
     ["-", PREC.ADD],
     ["*", PREC.MUL],
+    ["%", PREC.MUL],
     ["/", PREC.MUL],
-    ["as", PREC.AS],
+    [choice("as", "as?"), PREC.AS],
 ];
 const dec_digits = /[0-9][0-9_]*[0-9]?/;
 const float_exp = /[eE][+-]?[0-9][0-9_]*[0-9]?/;
@@ -52,9 +55,13 @@ module.exports = grammar({
         source_file: ($) => seq(optional($.shebang), repeat($.statement)),
         shebang: (_) => token(/#![^\r\n]*/),
         comment: (_) => token(choice(/\/\*.*?\*\//, seq("//", /[^\r\n]*/, endl))),
-        statement: ($) => seq(optional($.annotation), $._statement, optional(endl)),
-        _statement: ($) => prec.right(PREC.STMT, choice($._declaration, $._expression, $.block, $.for_stmt, $.while_stmt, $.do_while)),
+        statement: ($) => seq(repChoice($.annotation, $.label), $._statement, optional(endl)),
+        _statement: ($) => prec.right(PREC.STMT, choice($._declaration, $._expression, $.import_stmt, $.block, $.for_stmt, $.while_stmt, $.do_while)),
         _declaration: ($) => choice($.func_decl, $.class_decl, $.object_decl, $.property),
+        // Label
+        label: ($) => prec.left(PREC.LABEL, seq(field("name", $.identifier), "@")),
+        // Import
+        import_stmt: ($) => prec.left(PREC.PRIMARY, seq("import", $.type_proj)),
         // Types
         _type: ($) => choice($.func_type, $.type_user, $.type_paren, $.type_null),
         func_type: ($) => seq("(", commaSep($._type), ")", "->", $._type),
@@ -63,10 +70,11 @@ module.exports = grammar({
         type_null: ($) => seq(choice($.type_user, $.type_paren), "?"),
         type_params: ($) => seq("<", commaSep($.type_param), ">"),
         type_param: ($) => seq(field("name", $.identifier), optSeq(":", $._type)),
+        type_proj: ($) => prec.left(seq(optional(dotSep($.identifier)), choice(field("type", $.identifier), "*"))),
         // Annotation
         annotation: ($) => seq("@", $.identifier),
         // Declaration
-        func_decl: ($) => prec.right(seq("fun", optional($.type_params), field("name", $.identifier), $.param_list, optional($.func_body), optional(field("return", $._type)))),
+        func_decl: ($) => prec.right(seq("fun", optional($.type_params), field("name", $.identifier), $.param_list, optional(field("return", $._type)), optional($.func_body))),
         class_decl: ($) => prec.left(seq("class", optional($.type_params), field("name", $.identifier), optSeq(":", field("super", $.identifier)), choice(endl, $.class_body))),
         object_decl: ($) => seq("object", optional($.type_params), field("name", $.identifier)),
         // Function
@@ -86,18 +94,27 @@ module.exports = grammar({
         var_decl: ($) => seq(field("name", $.identifier), optSeq(":", field("type", $._type))),
         multivar_decl: ($) => seq("(", commaSep($.var_decl), ")"),
         // While loop
-        while_stmt: ($) => prec.left(seq("while", "(", $.expression, ")", $.statement)),
+        while_stmt: ($) => prec.left(seq("while", "(", field("condition", $.expression), ")", $.statement)),
         // Do while loop
-        do_while: ($) => prec.left(seq("do", $.statement, "while", "(", $.expression, ")")),
+        do_while: ($) => prec.left(seq("do", $.statement, "while", "(", field("condition", $.expression), ")")),
         // Block
         block: ($) => seq("{", repeat($.statement), "}"),
         // Expression
         expression: ($) => choice($._expression, $.lambda),
-        _expression: ($) => choice($.binary_expr, $.identifier, $.integer, $.float, $.call, $.selector, $.string, "false", "true", "null"),
+        _expression: ($) => prec(PREC.PRIMARY, choice($.paren_expr, $.binary_expr, $.try_expr, $.throw_expr, $.return_expr, $.continue_expr, $.break_expr, $.identifier, $.integer, $.float, $.call, $.selector, $.string, "false", "true", "null")),
+        paren_expr: ($) => seq("(", $._expression, ")"),
         binary_expr: ($) => choice(...binary_op.map(([op, precedence]) => prec.left(precedence, seq(field("left", $._expression), field("operator", op), field("right", $._expression))))),
+        try_expr: ($) => prec.left(seq("try", $.block, choice(seq(repeat1($.catch_block), optional($.finally_block)), $.finally_block))),
+        catch_block: ($) => seq("catch", "(", repeat($.annotation), $.identifier, ":", $._type, optional(","), ")", $.block),
+        finally_block: ($) => seq("finally", $.block),
+        throw_expr: ($) => seq("throw", $.expression),
+        return_expr: ($) => prec.left(seq(choice("return", seq("return@", field("label", $.identifier))), optional($.expression))),
+        continue_expr: ($) => choice("continue", seq("continue@", field("label", $.identifier))),
+        break_expr: ($) => choice("break", seq("break@", field("label", $.identifier))),
         call: ($) => prec(PREC.PRIMARY, seq(field("function", $._expression), $.args)),
         args: ($) => prec.right(choice($._comma_args, seq(optional($._comma_args), $.lambda))),
         _comma_args: ($) => seq("(", commaSep($.expression), ")"),
+        access_expr: ($) => prec.left(PREC.PRIMARY, seq($.expression, field("field", $.identifier))),
         lambda: ($) => prec.left(seq("{", optSeq(field("args", choice($.var_decl, $.multivar_decl)), "->"), repeat($.statement), "}")),
         selector: ($) => prec(PREC.PRIMARY, seq(field("operand", $.expression), ".", field("field", $.identifier))),
         identifier: ($) => choice("abstract", "annotation", "by", "catch", "companion", "constructor", "crossinline", "data", "dynamic", "enum", "external", "final", "finally", "get", "import", "infix", "init", "inline", "inner", "internal", "lateinit", "noinline", "open", "operator", "out", "override", "private", "protected", "public", "reified", "sealed", "tailrec", "set", "vararg", "where", "field", "property", "receiver", "param", "setparam", "delegate", "file", "expect", "actual", "const", "suspend", "value", $._identifier),
