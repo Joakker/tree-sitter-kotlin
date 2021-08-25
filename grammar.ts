@@ -98,6 +98,16 @@ export = grammar({
     type_params: ($) => seq("<", commaSep($.type_param), ">"),
     type_param: ($) => seq(field("name", $.identifier), optSeq(":", $._type)),
 
+    type_constraints: ($) =>
+      prec.right(seq("where", commaSep($.type_constraint))),
+    type_constraint: ($) =>
+      seq(
+        repeat($.annotation),
+        field("type", $.identifier),
+        ":",
+        field("super", $._type)
+      ),
+
     type_proj: ($) =>
       prec.left(
         seq(
@@ -117,7 +127,8 @@ export = grammar({
           optional($.type_params),
           field("name", $.identifier),
           $.param_list,
-          optional(field("return", $._type)),
+          optSeq(":", field("return", $._type)),
+          optional($.type_constraints),
           optional($.func_body)
         )
       ),
@@ -128,6 +139,7 @@ export = grammar({
           optional($.type_params),
           field("name", $.identifier),
           optSeq(":", field("super", $.identifier)),
+          optional($.type_constraints),
           choice(endl, $.class_body)
         )
       ),
@@ -158,6 +170,7 @@ export = grammar({
           choice("var", "val"),
           field("name", $.identifier),
           optSeq(":", field("type", $._type)),
+          optional($.type_constraints),
           optChoice($.delegate, seq("=", $.expression)),
           optSeq(
             endl,
@@ -288,9 +301,9 @@ export = grammar({
         "catch",
         "(",
         repeat($.annotation),
-        $.identifier,
+        field("exception", $.identifier),
         ":",
-        $._type,
+        field("name", $._type),
         optional(","),
         ")",
         $.block

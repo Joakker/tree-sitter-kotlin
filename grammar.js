@@ -70,12 +70,14 @@ module.exports = grammar({
         type_null: ($) => seq(choice($.type_user, $.type_paren), "?"),
         type_params: ($) => seq("<", commaSep($.type_param), ">"),
         type_param: ($) => seq(field("name", $.identifier), optSeq(":", $._type)),
+        type_constraints: ($) => prec.right(seq("where", commaSep($.type_constraint))),
+        type_constraint: ($) => seq(repeat($.annotation), field("type", $.identifier), ":", field("super", $._type)),
         type_proj: ($) => prec.left(seq(optional(dotSep($.identifier)), choice(field("type", $.identifier), "*"))),
         // Annotation
         annotation: ($) => seq("@", $.identifier),
         // Declaration
-        func_decl: ($) => prec.right(seq("fun", optional($.type_params), field("name", $.identifier), $.param_list, optional(field("return", $._type)), optional($.func_body))),
-        class_decl: ($) => prec.left(seq("class", optional($.type_params), field("name", $.identifier), optSeq(":", field("super", $.identifier)), choice(endl, $.class_body))),
+        func_decl: ($) => prec.right(seq("fun", optional($.type_params), field("name", $.identifier), $.param_list, optSeq(":", field("return", $._type)), optional($.type_constraints), optional($.func_body))),
+        class_decl: ($) => prec.left(seq("class", optional($.type_params), field("name", $.identifier), optSeq(":", field("super", $.identifier)), optional($.type_constraints), choice(endl, $.class_body))),
         object_decl: ($) => seq("object", optional($.type_params), field("name", $.identifier)),
         // Function
         param_list: ($) => seq("(", commaSep($.param_decl), ")"),
@@ -83,7 +85,7 @@ module.exports = grammar({
         func_body: ($) => choice(seq("=", $.expression), seq("{", repeat($.statement), "}")),
         // Class body
         class_body: ($) => prec.right(PREC.PRIMARY, seq("{", optional($.enum_entries), repeat(prec(PREC.PRIMARY, $._declaration)), "}")),
-        property: ($) => prec.right(seq(choice("var", "val"), field("name", $.identifier), optSeq(":", field("type", $._type)), optChoice($.delegate, seq("=", $.expression)), optSeq(endl, choice(seq($.getter, optSeq(endl, $.setter)), seq($.setter, optSeq(endl, $.getter)))))),
+        property: ($) => prec.right(seq(choice("var", "val"), field("name", $.identifier), optSeq(":", field("type", $._type)), optional($.type_constraints), optChoice($.delegate, seq("=", $.expression)), optSeq(endl, choice(seq($.getter, optSeq(endl, $.setter)), seq($.setter, optSeq(endl, $.getter)))))),
         setter: ($) => seq("set", "(", alias(seq(field("name", $.identifier), optSeq(":", field("type", $._type))), $.param_decl), ")", $.func_body),
         getter: ($) => seq("get", optSeq("(", ")"), $.func_body),
         delegate: ($) => seq("by", $.expression),
@@ -105,7 +107,7 @@ module.exports = grammar({
         paren_expr: ($) => seq("(", $._expression, ")"),
         binary_expr: ($) => choice(...binary_op.map(([op, precedence]) => prec.left(precedence, seq(field("left", $._expression), field("operator", op), field("right", $._expression))))),
         try_expr: ($) => prec.left(seq("try", $.block, choice(seq(repeat1($.catch_block), optional($.finally_block)), $.finally_block))),
-        catch_block: ($) => seq("catch", "(", repeat($.annotation), $.identifier, ":", $._type, optional(","), ")", $.block),
+        catch_block: ($) => seq("catch", "(", repeat($.annotation), field("exception", $.identifier), ":", field("name", $._type), optional(","), ")", $.block),
         finally_block: ($) => seq("finally", $.block),
         throw_expr: ($) => seq("throw", $.expression),
         return_expr: ($) => prec.left(seq(choice("return", seq("return@", field("label", $.identifier))), optional($.expression))),

@@ -529,7 +529,40 @@
   {
     "type": "catch_block",
     "named": true,
-    "fields": {},
+    "fields": {
+      "exception": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "func_type",
+            "named": true
+          },
+          {
+            "type": "type_null",
+            "named": true
+          },
+          {
+            "type": "type_paren",
+            "named": true
+          },
+          {
+            "type": "type_user",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": true,
@@ -540,26 +573,6 @@
         },
         {
           "type": "block",
-          "named": true
-        },
-        {
-          "type": "func_type",
-          "named": true
-        },
-        {
-          "type": "identifier",
-          "named": true
-        },
-        {
-          "type": "type_null",
-          "named": true
-        },
-        {
-          "type": "type_paren",
-          "named": true
-        },
-        {
-          "type": "type_user",
           "named": true
         }
       ]
@@ -627,6 +640,10 @@
       "types": [
         {
           "type": "class_body",
+          "named": true
+        },
+        {
+          "type": "type_constraints",
           "named": true
         },
         {
@@ -1241,6 +1258,10 @@
           "named": true
         },
         {
+          "type": "type_constraints",
+          "named": true
+        },
+        {
           "type": "type_params",
           "named": true
         }
@@ -1734,6 +1755,10 @@
         {
           "type": "try_expr",
           "named": true
+        },
+        {
+          "type": "type_constraints",
+          "named": true
         }
       ]
     }
@@ -2142,6 +2167,69 @@
         },
         {
           "type": "finally_block",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "type_constraint",
+    "named": true,
+    "fields": {
+      "super": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "func_type",
+            "named": true
+          },
+          {
+            "type": "type_null",
+            "named": true
+          },
+          {
+            "type": "type_paren",
+            "named": true
+          },
+          {
+            "type": "type_user",
+            "named": true
+          }
+        ]
+      },
+      "type": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "annotation",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "type_constraints",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "type_constraint",
           "named": true
         }
       ]
