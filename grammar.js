@@ -22,27 +22,6 @@ var PREC;
     PREC[PREC["PRIMARY"] = 12] = "PRIMARY";
     PREC[PREC["LABEL"] = 13] = "LABEL";
 })(PREC || (PREC = {}));
-const binary_op = [
-    ["||", PREC.OR],
-    ["&&", PREC.AND],
-    ["!=", PREC.EQUAL],
-    ["!==", PREC.EQUAL],
-    ["==", PREC.EQUAL],
-    ["===", PREC.EQUAL],
-    ["<", PREC.COMPARE],
-    [">", PREC.COMPARE],
-    ["<=", PREC.COMPARE],
-    [">=", PREC.COMPARE],
-    ["in", PREC.INFIX],
-    [seq("?", ":"), PREC.ELVIS],
-    ["..", PREC.RANGE],
-    ["+", PREC.ADD],
-    ["-", PREC.ADD],
-    ["*", PREC.MUL],
-    ["%", PREC.MUL],
-    ["/", PREC.MUL],
-    [choice("as", "as?"), PREC.AS],
-];
 const dec_digits = /[0-9][0-9_]*[0-9]?/;
 const float_exp = /[eE][+-]?[0-9][0-9_]*[0-9]?/;
 const endl = /[\r\n;]+/;
@@ -105,7 +84,31 @@ module.exports = grammar({
         expression: ($) => choice($._expression, $.lambda),
         _expression: ($) => prec(PREC.PRIMARY, choice($.paren_expr, $.binary_expr, $.try_expr, $.throw_expr, $.return_expr, $.continue_expr, $.break_expr, $.identifier, $.integer, $.float, $.call, $.selector, $.string, "false", "true", "null")),
         paren_expr: ($) => seq("(", $._expression, ")"),
-        binary_expr: ($) => choice(...binary_op.map(([op, precedence]) => prec.left(precedence, seq(field("left", $._expression), field("operator", op), field("right", $._expression))))),
+        binary_expr: ($) => {
+            let binary_expr = [
+                ["||", PREC.OR],
+                ["&&", PREC.AND],
+                ["!=", PREC.EQUAL],
+                ["!==", PREC.EQUAL],
+                ["==", PREC.EQUAL],
+                ["===", PREC.EQUAL],
+                ["<", PREC.COMPARE],
+                [">", PREC.COMPARE],
+                ["<=", PREC.COMPARE],
+                [">=", PREC.COMPARE],
+                ["in", PREC.INFIX],
+                [seq("?", ":"), PREC.ELVIS],
+                ["..", PREC.RANGE],
+                ["+", PREC.ADD],
+                ["-", PREC.ADD],
+                ["*", PREC.MUL],
+                ["%", PREC.MUL],
+                ["/", PREC.MUL],
+                [choice("as", "as?"), PREC.AS],
+                [$.identifier, PREC.INFIX],
+            ];
+            return choice(...binary_expr.map(([op, precedence]) => prec.left(precedence, seq(field("left", $._expression), field("operator", op), field("right", $._expression)))));
+        },
         try_expr: ($) => prec.left(seq("try", $.block, choice(seq(repeat1($.catch_block), optional($.finally_block)), $.finally_block))),
         catch_block: ($) => seq("catch", "(", repeat($.annotation), field("exception", $.identifier), ":", field("name", $._type), optional(","), ")", $.block),
         finally_block: ($) => seq("finally", $.block),

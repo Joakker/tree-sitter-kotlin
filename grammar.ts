@@ -23,28 +23,6 @@ enum PREC {
   LABEL,
 }
 
-const binary_op: Array<[RuleOrLiteral, PREC]> = [
-  ["||", PREC.OR],
-  ["&&", PREC.AND],
-  ["!=", PREC.EQUAL],
-  ["!==", PREC.EQUAL],
-  ["==", PREC.EQUAL],
-  ["===", PREC.EQUAL],
-  ["<", PREC.COMPARE],
-  [">", PREC.COMPARE],
-  ["<=", PREC.COMPARE],
-  [">=", PREC.COMPARE],
-  ["in", PREC.INFIX],
-  [seq("?", ":"), PREC.ELVIS],
-  ["..", PREC.RANGE],
-  ["+", PREC.ADD],
-  ["-", PREC.ADD],
-  ["*", PREC.MUL],
-  ["%", PREC.MUL],
-  ["/", PREC.MUL],
-  [choice("as", "as?"), PREC.AS],
-];
-
 const dec_digits = /[0-9][0-9_]*[0-9]?/;
 const float_exp = /[eE][+-]?[0-9][0-9_]*[0-9]?/;
 const endl = /[\r\n;]+/;
@@ -271,9 +249,32 @@ export = grammar({
 
     paren_expr: ($) => seq("(", $._expression, ")"),
 
-    binary_expr: ($) =>
-      choice(
-        ...binary_op.map(([op, precedence]) =>
+    binary_expr: ($) => {
+      let binary_expr: Array<[RuleOrLiteral, PREC]> = [
+        ["||", PREC.OR],
+        ["&&", PREC.AND],
+        ["!=", PREC.EQUAL],
+        ["!==", PREC.EQUAL],
+        ["==", PREC.EQUAL],
+        ["===", PREC.EQUAL],
+        ["<", PREC.COMPARE],
+        [">", PREC.COMPARE],
+        ["<=", PREC.COMPARE],
+        [">=", PREC.COMPARE],
+        ["in", PREC.INFIX],
+        [seq("?", ":"), PREC.ELVIS],
+        ["..", PREC.RANGE],
+        ["+", PREC.ADD],
+        ["-", PREC.ADD],
+        ["*", PREC.MUL],
+        ["%", PREC.MUL],
+        ["/", PREC.MUL],
+        [choice("as", "as?"), PREC.AS],
+        [$.identifier, PREC.INFIX],
+      ];
+
+      return choice(
+        ...binary_expr.map(([op, precedence]) =>
           prec.left(
             precedence,
             seq(
@@ -283,8 +284,8 @@ export = grammar({
             )
           )
         )
-      ),
-
+      );
+    },
     try_expr: ($) =>
       prec.left(
         seq(

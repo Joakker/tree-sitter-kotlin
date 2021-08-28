@@ -236,6 +236,10 @@
             "named": false
           },
           {
+            "type": "identifier",
+            "named": true
+          },
+          {
             "type": "in",
             "named": false
           },
