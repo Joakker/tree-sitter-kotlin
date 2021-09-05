@@ -19,6 +19,7 @@ enum PREC {
   MUL,
   AS,
   STMT,
+  TYPE,
   PRIMARY,
   LABEL,
 }
@@ -33,6 +34,7 @@ export = grammar({
   inline: ($) => [$.statement, $.expression],
   extras: ($) => [$.comment, /\s+/],
   word: ($) => $._identifier,
+  conflicts: ($) => [[$.call, $.binary_expr]],
 
   rules: {
     source_file: ($) => seq(optional($.shebang), repeat($.statement)),
@@ -56,6 +58,9 @@ export = grammar({
     _declaration: ($) =>
       choice($.func_decl, $.class_decl, $.object_decl, $.property),
 
+    // Modifiers
+    modifiers: (_) => choice("private", "public"),
+
     // Label
     label: ($) => prec.left(PREC.LABEL, seq(field("name", $.identifier), "@")),
 
@@ -67,7 +72,7 @@ export = grammar({
     func_type: ($) => seq("(", commaSep($._type), ")", "->", $._type),
     type_user: ($) =>
       prec.left(
-        PREC.PRIMARY,
+        PREC.TYPE,
         seq(optional(dotSep($.identifier)), choice("*", $.identifier))
       ),
     type_paren: ($) => prec(PREC.PRIMARY, seq("(", $.func_type, ")")),
@@ -94,6 +99,8 @@ export = grammar({
         )
       ),
 
+    type_args: ($) => seq("<", commaSep($._type), ">"),
+
     // Annotation
     annotation: ($) => seq("@", $.identifier),
 
@@ -116,6 +123,7 @@ export = grammar({
           "class",
           optional($.type_params),
           field("name", $.identifier),
+          optional($.primary_constructor),
           optSeq(":", field("super", $.identifier)),
           optional($.type_constraints),
           choice(endl, $.class_body)
@@ -123,6 +131,19 @@ export = grammar({
       ),
     object_decl: ($) =>
       seq("object", optional($.type_params), field("name", $.identifier)),
+
+    primary_constructor: ($) =>
+      seq(optSeq(optional($.modifiers), "constructor"), $.class_params),
+    class_params: ($) => seq("(", commaSep($.class_param), ")"),
+    class_param: ($) =>
+      seq(
+        optional($.modifiers),
+        optChoice("var", "val"),
+        field("name", $.identifier),
+        ":",
+        field("type", $._type),
+        optSeq("=", field("init", $.expression))
+      ),
 
     // Function
     param_list: ($) => seq("(", commaSep($.param_decl), ")"),
@@ -328,7 +349,10 @@ export = grammar({
       choice("break", seq("break@", field("label", $.identifier))),
 
     call: ($) =>
-      prec(PREC.PRIMARY, seq(field("function", $._expression), $.args)),
+      prec(
+        PREC.PRIMARY,
+        seq(field("function", $._expression), optional($.type_args), $.args)
+      ),
     args: ($) =>
       prec.right(choice($._comma_args, seq(optional($._comma_args), $.lambda))),
     _comma_args: ($) => seq("(", commaSep($.expression), ")"),

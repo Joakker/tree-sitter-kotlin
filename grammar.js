@@ -19,8 +19,9 @@ var PREC;
     PREC[PREC["MUL"] = 9] = "MUL";
     PREC[PREC["AS"] = 10] = "AS";
     PREC[PREC["STMT"] = 11] = "STMT";
-    PREC[PREC["PRIMARY"] = 12] = "PRIMARY";
-    PREC[PREC["LABEL"] = 13] = "LABEL";
+    PREC[PREC["TYPE"] = 12] = "TYPE";
+    PREC[PREC["PRIMARY"] = 13] = "PRIMARY";
+    PREC[PREC["LABEL"] = 14] = "LABEL";
 })(PREC || (PREC = {}));
 const dec_digits = /[0-9][0-9_]*[0-9]?/;
 const float_exp = /[eE][+-]?[0-9][0-9_]*[0-9]?/;
@@ -30,6 +31,7 @@ module.exports = grammar({
     inline: ($) => [$.statement, $.expression],
     extras: ($) => [$.comment, /\s+/],
     word: ($) => $._identifier,
+    conflicts: ($) => [[$.call, $.binary_expr]],
     rules: {
         source_file: ($) => seq(optional($.shebang), repeat($.statement)),
         shebang: (_) => token(/#![^\r\n]*/),
@@ -37,6 +39,8 @@ module.exports = grammar({
         statement: ($) => seq(repChoice($.annotation, $.label), $._statement, optional(endl)),
         _statement: ($) => prec.right(PREC.STMT, choice($._declaration, $._expression, $.import_stmt, $.block, $.for_stmt, $.while_stmt, $.do_while)),
         _declaration: ($) => choice($.func_decl, $.class_decl, $.object_decl, $.property),
+        // Modifiers
+        modifiers: (_) => choice("private", "public"),
         // Label
         label: ($) => prec.left(PREC.LABEL, seq(field("name", $.identifier), "@")),
         // Import
@@ -44,7 +48,7 @@ module.exports = grammar({
         // Types
         _type: ($) => choice($.func_type, $.type_user, $.type_paren, $.type_null),
         func_type: ($) => seq("(", commaSep($._type), ")", "->", $._type),
-        type_user: ($) => prec.left(PREC.PRIMARY, seq(optional(dotSep($.identifier)), choice("*", $.identifier))),
+        type_user: ($) => prec.left(PREC.TYPE, seq(optional(dotSep($.identifier)), choice("*", $.identifier))),
         type_paren: ($) => prec(PREC.PRIMARY, seq("(", $.func_type, ")")),
         type_null: ($) => seq(choice($.type_user, $.type_paren), "?"),
         type_params: ($) => seq("<", commaSep($.type_param), ">"),
@@ -52,12 +56,16 @@ module.exports = grammar({
         type_constraints: ($) => prec.right(seq("where", commaSep($.type_constraint))),
         type_constraint: ($) => seq(repeat($.annotation), field("type", $.identifier), ":", field("super", $._type)),
         type_proj: ($) => prec.left(seq(optional(dotSep($.identifier)), choice(field("type", $.identifier), "*"))),
+        type_args: ($) => seq("<", commaSep($._type), ">"),
         // Annotation
         annotation: ($) => seq("@", $.identifier),
         // Declaration
         func_decl: ($) => prec.right(seq("fun", optional($.type_params), field("name", $.identifier), $.param_list, optSeq(":", field("return", $._type)), optional($.type_constraints), optional($.func_body))),
-        class_decl: ($) => prec.left(seq("class", optional($.type_params), field("name", $.identifier), optSeq(":", field("super", $.identifier)), optional($.type_constraints), choice(endl, $.class_body))),
+        class_decl: ($) => prec.left(seq("class", optional($.type_params), field("name", $.identifier), optional($.primary_constructor), optSeq(":", field("super", $.identifier)), optional($.type_constraints), choice(endl, $.class_body))),
         object_decl: ($) => seq("object", optional($.type_params), field("name", $.identifier)),
+        primary_constructor: ($) => seq(optSeq(optional($.modifiers), "constructor"), $.class_params),
+        class_params: ($) => seq("(", commaSep($.class_param), ")"),
+        class_param: ($) => seq(optional($.modifiers), optChoice("var", "val"), field("name", $.identifier), ":", field("type", $._type), optSeq("=", field("init", $.expression))),
         // Function
         param_list: ($) => seq("(", commaSep($.param_decl), ")"),
         param_decl: ($) => seq(field("name", $.identifier), ":", field("type", $._type)),
@@ -116,7 +124,7 @@ module.exports = grammar({
         return_expr: ($) => prec.left(seq(choice("return", seq("return@", field("label", $.identifier))), optional($.expression))),
         continue_expr: ($) => choice("continue", seq("continue@", field("label", $.identifier))),
         break_expr: ($) => choice("break", seq("break@", field("label", $.identifier))),
-        call: ($) => prec(PREC.PRIMARY, seq(field("function", $._expression), $.args)),
+        call: ($) => prec(PREC.PRIMARY, seq(field("function", $._expression), optional($.type_args), $.args)),
         args: ($) => prec.right(choice($._comma_args, seq(optional($._comma_args), $.lambda))),
         _comma_args: ($) => seq("(", commaSep($.expression), ")"),
         access_expr: ($) => prec.left(PREC.PRIMARY, seq($.expression, field("field", $.identifier))),
