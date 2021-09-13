@@ -40,8 +40,7 @@ export = grammar({
     source_file: ($) => seq(optional($.shebang), repeat($.statement)),
     shebang: (_) => token(/#![^\r\n]*/),
     comment: (_) => token(choice(/\/\*.*?\*\//, seq("//", /[^\r\n]*/, endl))),
-    statement: ($) =>
-      seq(repChoice($.annotation, $.label), $._statement, optional(endl)),
+    statement: ($) => seq(repChoice($.annotation, $.label), $._statement, endl),
     _statement: ($) =>
       prec.right(
         PREC.STMT,
@@ -56,7 +55,10 @@ export = grammar({
         )
       ),
     _declaration: ($) =>
-      choice($.func_decl, $.class_decl, $.object_decl, $.property),
+      seq(
+        optional($.modifiers),
+        choice($.func_decl, $.class_decl, $.object_decl, $.property)
+      ),
 
     // Modifiers
     modifiers: (_) => choice("private", "public"),
@@ -65,7 +67,7 @@ export = grammar({
     label: ($) => prec.left(PREC.LABEL, seq(field("name", $.identifier), "@")),
 
     // Import
-    import_stmt: ($) => prec.left(PREC.PRIMARY, seq("import", $.type_proj)),
+    import_stmt: ($) => prec.left(PREC.PRIMARY, seq("import", $.type_user)),
 
     // Types
     _type: ($) => choice($.func_type, $.type_user, $.type_paren, $.type_null),
@@ -73,7 +75,7 @@ export = grammar({
     type_user: ($) =>
       prec.left(
         PREC.TYPE,
-        seq(optional(dotSep($.identifier)), choice("*", $.identifier))
+        seq(optSeq(dotSep($.identifier), "."), choice("*", $.identifier))
       ),
     type_paren: ($) => prec(PREC.PRIMARY, seq("(", $.func_type, ")")),
     type_null: ($) => seq(choice($.type_user, $.type_paren), "?"),
@@ -89,14 +91,6 @@ export = grammar({
         field("type", $.identifier),
         ":",
         field("super", $._type)
-      ),
-
-    type_proj: ($) =>
-      prec.left(
-        seq(
-          optional(dotSep($.identifier)),
-          choice(field("type", $.identifier), "*")
-        )
       ),
 
     type_args: ($) => seq("<", commaSep($._type), ">"),

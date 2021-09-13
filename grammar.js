@@ -36,26 +36,25 @@ module.exports = grammar({
         source_file: ($) => seq(optional($.shebang), repeat($.statement)),
         shebang: (_) => token(/#![^\r\n]*/),
         comment: (_) => token(choice(/\/\*.*?\*\//, seq("//", /[^\r\n]*/, endl))),
-        statement: ($) => seq(repChoice($.annotation, $.label), $._statement, optional(endl)),
+        statement: ($) => seq(repChoice($.annotation, $.label), $._statement, endl),
         _statement: ($) => prec.right(PREC.STMT, choice($._declaration, $._expression, $.import_stmt, $.block, $.for_stmt, $.while_stmt, $.do_while)),
-        _declaration: ($) => choice($.func_decl, $.class_decl, $.object_decl, $.property),
+        _declaration: ($) => seq(optional($.modifiers), choice($.func_decl, $.class_decl, $.object_decl, $.property)),
         // Modifiers
         modifiers: (_) => choice("private", "public"),
         // Label
         label: ($) => prec.left(PREC.LABEL, seq(field("name", $.identifier), "@")),
         // Import
-        import_stmt: ($) => prec.left(PREC.PRIMARY, seq("import", $.type_proj)),
+        import_stmt: ($) => prec.left(PREC.PRIMARY, seq("import", $.type_user)),
         // Types
         _type: ($) => choice($.func_type, $.type_user, $.type_paren, $.type_null),
         func_type: ($) => seq("(", commaSep($._type), ")", "->", $._type),
-        type_user: ($) => prec.left(PREC.TYPE, seq(optional(dotSep($.identifier)), choice("*", $.identifier))),
+        type_user: ($) => prec.left(PREC.TYPE, seq(optSeq(dotSep($.identifier), "."), choice("*", $.identifier))),
         type_paren: ($) => prec(PREC.PRIMARY, seq("(", $.func_type, ")")),
         type_null: ($) => seq(choice($.type_user, $.type_paren), "?"),
         type_params: ($) => seq("<", commaSep($.type_param), ">"),
         type_param: ($) => seq(field("name", $.identifier), optSeq(":", $._type)),
         type_constraints: ($) => prec.right(seq("where", commaSep($.type_constraint))),
         type_constraint: ($) => seq(repeat($.annotation), field("type", $.identifier), ":", field("super", $._type)),
-        type_proj: ($) => prec.left(seq(optional(dotSep($.identifier)), choice(field("type", $.identifier), "*"))),
         type_args: ($) => seq("<", commaSep($._type), ">"),
         // Annotation
         annotation: ($) => seq("@", $.identifier),

@@ -390,6 +390,10 @@
           "named": true
         },
         {
+          "type": "modifiers",
+          "named": true
+        },
+        {
           "type": "object_decl",
           "named": true
         },
@@ -604,6 +608,10 @@
         },
         {
           "type": "func_decl",
+          "named": true
+        },
+        {
+          "type": "modifiers",
           "named": true
         },
         {
@@ -1029,6 +1037,10 @@
           "named": true
         },
         {
+          "type": "modifiers",
+          "named": true
+        },
+        {
           "type": "object_decl",
           "named": true
         },
@@ -1200,6 +1212,10 @@
           "named": true
         },
         {
+          "type": "modifiers",
+          "named": true
+        },
+        {
           "type": "multivar_decl",
           "named": true
         },
@@ -1316,6 +1332,10 @@
         },
         {
           "type": "lambda",
+          "named": true
+        },
+        {
+          "type": "modifiers",
           "named": true
         },
         {
@@ -1473,7 +1493,7 @@
       "required": true,
       "types": [
         {
-          "type": "type_proj",
+          "type": "type_user",
           "named": true
         }
       ]
@@ -1576,6 +1596,10 @@
         },
         {
           "type": "label",
+          "named": true
+        },
+        {
+          "type": "modifiers",
           "named": true
         },
         {
@@ -2213,6 +2237,10 @@
           "named": true
         },
         {
+          "type": "modifiers",
+          "named": true
+        },
+        {
           "type": "object_decl",
           "named": true
         },
@@ -2523,32 +2551,6 @@
     }
   },
   {
-    "type": "type_proj",
-    "named": true,
-    "fields": {
-      "type": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "identifier",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "type_user",
     "named": true,
     "fields": {},
@@ -2742,6 +2744,10 @@
         },
         {
           "type": "label",
+          "named": true
+        },
+        {
+          "type": "modifiers",
           "named": true
         },
         {
