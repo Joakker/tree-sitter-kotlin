@@ -238,6 +238,10 @@
             "named": false
           },
           {
+            "type": "=",
+            "named": false
+          },
+          {
             "type": "==",
             "named": false
           },
@@ -2186,10 +2190,6 @@
           },
           {
             "type": "integer",
-            "named": true
-          },
-          {
-            "type": "lambda",
             "named": true
           },
           {

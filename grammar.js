@@ -18,10 +18,12 @@ var PREC;
     PREC[PREC["ADD"] = 8] = "ADD";
     PREC[PREC["MUL"] = 9] = "MUL";
     PREC[PREC["AS"] = 10] = "AS";
-    PREC[PREC["STMT"] = 11] = "STMT";
-    PREC[PREC["TYPE"] = 12] = "TYPE";
-    PREC[PREC["PRIMARY"] = 13] = "PRIMARY";
-    PREC[PREC["LABEL"] = 14] = "LABEL";
+    PREC[PREC["ACCESS"] = 11] = "ACCESS";
+    PREC[PREC["STMT"] = 12] = "STMT";
+    PREC[PREC["TYPE"] = 13] = "TYPE";
+    PREC[PREC["PRIMARY"] = 14] = "PRIMARY";
+    PREC[PREC["THROW"] = 15] = "THROW";
+    PREC[PREC["LABEL"] = 16] = "LABEL";
 })(PREC || (PREC = {}));
 const dec_digits = /[0-9][0-9_]*[0-9]?/;
 const float_exp = /[eE][+-]?[0-9][0-9_]*[0-9]?/;
@@ -96,6 +98,7 @@ module.exports = grammar({
         paren_expr: ($) => seq("(", $._expression, ")"),
         binary_expr: ($) => {
             let binary_expr = [
+                ["=", PREC.ASSIGN],
                 ["||", PREC.OR],
                 ["&&", PREC.AND],
                 ["!=", PREC.EQUAL],
@@ -122,7 +125,7 @@ module.exports = grammar({
         try_expr: ($) => prec.left(seq("try", $.block, choice(seq(repeat1($.catch_block), optional($.finally_block)), $.finally_block))),
         catch_block: ($) => seq("catch", "(", repeat($.annotation), field("exception", $.identifier), ":", field("name", $._type), optional(","), ")", $.block),
         finally_block: ($) => seq("finally", $.block),
-        throw_expr: ($) => seq("throw", $.expression),
+        throw_expr: ($) => prec.right(PREC.THROW, seq("throw", $.expression)),
         return_expr: ($) => prec.left(seq(choice("return", seq("return@", field("label", $.identifier))), optional($.expression))),
         continue_expr: ($) => choice("continue", seq("continue@", field("label", $.identifier))),
         break_expr: ($) => choice("break", seq("break@", field("label", $.identifier))),
@@ -130,9 +133,8 @@ module.exports = grammar({
         args: ($) => prec.right(choice($._comma_args, seq(optional($._comma_args), $.lambda))),
         _comma_args: ($) => seq("(", commaSep($.arg), ")"),
         arg: ($) => seq(optSeq(field("name", $.identifier), "="), $.expression),
-        access_expr: ($) => prec.left(PREC.PRIMARY, seq($.expression, field("field", $.identifier))),
         lambda: ($) => prec.left(seq("{", optSeq(field("args", choice($.var_decl, $.multivar_decl)), "->"), repeat($.statement), "}")),
-        selector: ($) => prec(PREC.PRIMARY, seq(field("operand", $.expression), ".", field("field", $.identifier))),
+        selector: ($) => prec.left(PREC.ACCESS, seq(field("operand", $._expression), ".", field("field", $.identifier))),
         identifier: ($) => choice("abstract", "annotation", "by", "catch", "companion", "constructor", "crossinline", "data", "dynamic", "enum", "external", "final", "finally", "get", "import", "infix", "init", "inline", "inner", "internal", "lateinit", "noinline", "open", "operator", "out", "override", "private", "protected", "public", "reified", "sealed", "tailrec", "set", "vararg", "where", "field", "property", "receiver", "param", "setparam", "delegate", "file", "expect", "actual", "const", "suspend", "value", $._identifier),
         _identifier: (_) => /[\p{L}_][\p{L}\p{N}_]*/,
         // Literals

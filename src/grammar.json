@@ -93,7 +93,7 @@
     },
     "_statement": {
       "type": "PREC_RIGHT",
-      "value": 11,
+      "value": 12,
       "content": {
         "type": "CHOICE",
         "members": [
@@ -181,7 +181,7 @@
     },
     "label": {
       "type": "PREC_LEFT",
-      "value": 14,
+      "value": 16,
       "content": {
         "type": "SEQ",
         "members": [
@@ -202,7 +202,7 @@
     },
     "import_stmt": {
       "type": "PREC_LEFT",
-      "value": 13,
+      "value": 14,
       "content": {
         "type": "SEQ",
         "members": [
@@ -314,7 +314,7 @@
     },
     "type_user": {
       "type": "PREC_LEFT",
-      "value": 12,
+      "value": 13,
       "content": {
         "type": "SEQ",
         "members": [
@@ -386,7 +386,7 @@
     },
     "type_paren": {
       "type": "PREC",
-      "value": 13,
+      "value": 14,
       "content": {
         "type": "SEQ",
         "members": [
@@ -1281,7 +1281,7 @@
     },
     "class_body": {
       "type": "PREC_RIGHT",
-      "value": 13,
+      "value": 14,
       "content": {
         "type": "SEQ",
         "members": [
@@ -1305,7 +1305,7 @@
             "type": "REPEAT",
             "content": {
               "type": "PREC",
-              "value": 13,
+              "value": 14,
               "content": {
                 "type": "SYMBOL",
                 "name": "_declaration"
@@ -1673,7 +1673,7 @@
     },
     "enum_entry": {
       "type": "PREC_LEFT",
-      "value": 11,
+      "value": 12,
       "content": {
         "type": "SEQ",
         "members": [
@@ -1967,7 +1967,7 @@
     },
     "_expression": {
       "type": "PREC",
-      "value": 13,
+      "value": 14,
       "content": {
         "type": "CHOICE",
         "members": [
@@ -2058,6 +2058,39 @@
     "binary_expr": {
       "type": "CHOICE",
       "members": [
+        {
+          "type": "PREC_LEFT",
+          "value": 0,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "FIELD",
+                "name": "left",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_expression"
+                }
+              },
+              {
+                "type": "FIELD",
+                "name": "operator",
+                "content": {
+                  "type": "STRING",
+                  "value": "="
+                }
+              },
+              {
+                "type": "FIELD",
+                "name": "right",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_expression"
+                }
+              }
+            ]
+          }
+        },
         {
           "type": "PREC_LEFT",
           "value": 1,
@@ -2862,17 +2895,21 @@
       ]
     },
     "throw_expr": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "throw"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "expression"
-        }
-      ]
+      "type": "PREC_RIGHT",
+      "value": 15,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "throw"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "expression"
+          }
+        ]
+      }
     },
     "return_expr": {
       "type": "PREC_LEFT",
@@ -2975,7 +3012,7 @@
     },
     "call": {
       "type": "PREC",
-      "value": 13,
+      "value": 14,
       "content": {
         "type": "SEQ",
         "members": [
@@ -3140,27 +3177,6 @@
         }
       ]
     },
-    "access_expr": {
-      "type": "PREC_LEFT",
-      "value": 13,
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "SYMBOL",
-            "name": "expression"
-          },
-          {
-            "type": "FIELD",
-            "name": "field",
-            "content": {
-              "type": "SYMBOL",
-              "name": "identifier"
-            }
-          }
-        ]
-      }
-    },
     "lambda": {
       "type": "PREC_LEFT",
       "value": 0,
@@ -3220,8 +3236,8 @@
       }
     },
     "selector": {
-      "type": "PREC",
-      "value": 13,
+      "type": "PREC_LEFT",
+      "value": 11,
       "content": {
         "type": "SEQ",
         "members": [
@@ -3230,7 +3246,7 @@
             "name": "operand",
             "content": {
               "type": "SYMBOL",
-              "name": "expression"
+              "name": "_expression"
             }
           },
           {

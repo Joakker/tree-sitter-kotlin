@@ -18,9 +18,11 @@ enum PREC {
   ADD,
   MUL,
   AS,
+  ACCESS,
   STMT,
   TYPE,
   PRIMARY,
+  THROW,
   LABEL,
 }
 
@@ -281,6 +283,7 @@ export = grammar({
 
     binary_expr: ($) => {
       let binary_expr: Array<[RuleOrLiteral, PREC]> = [
+        ["=", PREC.ASSIGN],
         ["||", PREC.OR],
         ["&&", PREC.AND],
         ["!=", PREC.EQUAL],
@@ -341,7 +344,7 @@ export = grammar({
       ),
     finally_block: ($) => seq("finally", $.block),
 
-    throw_expr: ($) => seq("throw", $.expression),
+    throw_expr: ($) => prec.right(PREC.THROW, seq("throw", $.expression)),
 
     return_expr: ($) =>
       prec.left(
@@ -367,9 +370,6 @@ export = grammar({
     _comma_args: ($) => seq("(", commaSep($.arg), ")"),
     arg: ($) => seq(optSeq(field("name", $.identifier), "="), $.expression),
 
-    access_expr: ($) =>
-      prec.left(PREC.PRIMARY, seq($.expression, field("field", $.identifier))),
-
     lambda: ($) =>
       prec.left(
         seq(
@@ -380,9 +380,9 @@ export = grammar({
         )
       ),
     selector: ($) =>
-      prec(
-        PREC.PRIMARY,
-        seq(field("operand", $.expression), ".", field("field", $.identifier))
+      prec.left(
+        PREC.ACCESS,
+        seq(field("operand", $._expression), ".", field("field", $.identifier))
       ),
 
     identifier: ($) =>
