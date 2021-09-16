@@ -2,7 +2,7 @@
 const optChoice = (...args) => optional(choice(...args));
 const repSeq = (...args) => repeat(seq(...args));
 const optSeq = (...args) => optional(seq(...args));
-const commaSep = (arg) => optSeq(arg, optional(repSeq(",", arg)));
+const commaSep = (arg) => optSeq(arg, optional(repSeq(",", arg)), optional(","));
 const dotSep = (arg) => seq(arg, optional(repSeq(".", arg)));
 const repChoice = (...args) => repeat(choice(...args));
 var PREC;

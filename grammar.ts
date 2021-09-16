@@ -2,7 +2,7 @@ const optChoice = (...args: RuleOrLiteral[]) => optional(choice(...args));
 const repSeq = (...args: RuleOrLiteral[]) => repeat(seq(...args));
 const optSeq = (...args: RuleOrLiteral[]) => optional(seq(...args));
 const commaSep = (arg: RuleOrLiteral) =>
-  optSeq(arg, optional(repSeq(",", arg)));
+  optSeq(arg, optional(repSeq(",", arg)), optional(","));
 const dotSep = (arg: RuleOrLiteral) => seq(arg, optional(repSeq(".", arg)));
 const repChoice = (...args: RuleOrLiteral[]) => repeat(choice(...args));
 
