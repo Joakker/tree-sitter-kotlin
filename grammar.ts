@@ -34,7 +34,10 @@ export = grammar({
   inline: ($) => [$.statement, $.expression],
   extras: ($) => [$.comment, /\s+/],
   word: ($) => $._identifier,
-  conflicts: ($) => [[$.call, $.binary_expr]],
+  conflicts: ($) => [
+    [$.call, $.binary_expr],
+    [$.modifiers, $.identifier],
+  ],
 
   rules: {
     source_file: ($) => seq(optional($.shebang), repeat($.statement)),
@@ -124,7 +127,14 @@ export = grammar({
         )
       ),
     object_decl: ($) =>
-      seq("object", optional($.type_params), field("name", $.identifier)),
+      prec.right(
+        seq(
+          optional("companion"),
+          "object",
+          optional($.type_params),
+          optional(field("name", $.identifier))
+        )
+      ),
 
     primary_constructor: ($) =>
       seq(optSeq(optional($.modifiers), "constructor"), $.class_params),

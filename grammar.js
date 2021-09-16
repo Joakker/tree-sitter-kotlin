@@ -31,7 +31,10 @@ module.exports = grammar({
     inline: ($) => [$.statement, $.expression],
     extras: ($) => [$.comment, /\s+/],
     word: ($) => $._identifier,
-    conflicts: ($) => [[$.call, $.binary_expr]],
+    conflicts: ($) => [
+        [$.call, $.binary_expr],
+        [$.modifiers, $.identifier],
+    ],
     rules: {
         source_file: ($) => seq(optional($.shebang), repeat($.statement)),
         shebang: (_) => token(/#![^\r\n]*/),
@@ -61,7 +64,7 @@ module.exports = grammar({
         // Declaration
         func_decl: ($) => prec.right(seq("fun", optional($.type_params), field("name", $.identifier), $.param_list, optSeq(":", field("return", $._type)), optional($.type_constraints), optional($.func_body))),
         class_decl: ($) => prec.left(seq("class", optional($.type_params), field("name", $.identifier), optional($.primary_constructor), optSeq(":", field("super", $.identifier)), optional($.type_constraints), choice(endl, $.class_body))),
-        object_decl: ($) => seq("object", optional($.type_params), field("name", $.identifier)),
+        object_decl: ($) => prec.right(seq(optional("companion"), "object", optional($.type_params), optional(field("name", $.identifier)))),
         primary_constructor: ($) => seq(optSeq(optional($.modifiers), "constructor"), $.class_params),
         class_params: ($) => seq("(", commaSep($.class_param), ")"),
         class_param: ($) => seq(optional($.modifiers), optChoice("var", "val"), field("name", $.identifier), ":", field("type", $._type), optSeq("=", field("init", $.expression))),
