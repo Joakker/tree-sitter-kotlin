@@ -142,7 +142,12 @@ export = grammar({
     // Function
     param_list: ($) => seq("(", commaSep($.param_decl), ")"),
     param_decl: ($) =>
-      seq(field("name", $.identifier), ":", field("type", $._type)),
+      seq(
+        field("name", $.identifier),
+        ":",
+        field("type", $._type),
+        optSeq("=", field("init", $._expression))
+      ),
     func_body: ($) =>
       choice(seq("=", $.expression), seq("{", repeat($.statement), "}")),
 
@@ -349,7 +354,8 @@ export = grammar({
       ),
     args: ($) =>
       prec.right(choice($._comma_args, seq(optional($._comma_args), $.lambda))),
-    _comma_args: ($) => seq("(", commaSep($.expression), ")"),
+    _comma_args: ($) => seq("(", commaSep($.arg), ")"),
+    arg: ($) => seq(optSeq(field("name", $.identifier), "="), $.expression),
 
     access_expr: ($) =>
       prec.left(PREC.PRIMARY, seq($.expression, field("field", $.identifier))),
