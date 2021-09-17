@@ -42,8 +42,10 @@ module.exports = grammar({
         shebang: (_) => token(/#![^\r\n]*/),
         comment: (_) => token(choice(/\/\*.*?\*\//, seq("//", /[^\r\n]*/, endl))),
         statement: ($) => seq(repChoice($.annotation, $.label), $._statement, endl),
-        _statement: ($) => prec.right(PREC.STMT, choice($._declaration, $._expression, $.import_stmt, $.block, $.for_stmt, $.while_stmt, $.do_while)),
+        _statement: ($) => prec.right(PREC.STMT, choice($._declaration, $._expression, $.import_stmt, $.block, $.for_stmt, $.while_stmt, $.do_while, $.package_stmt)),
         _declaration: ($) => seq(optional($.modifiers), choice($.func_decl, $.class_decl, $.object_decl, $.property)),
+        package_stmt: ($) => seq("package", $.package_path),
+        package_path: ($) => dotSep($.identifier),
         // Modifiers
         modifiers: (_) => choice("private", "public"),
         // Label
@@ -53,7 +55,7 @@ module.exports = grammar({
         // Types
         _type: ($) => choice($.func_type, $.type_user, $.type_paren, $.type_null),
         func_type: ($) => seq("(", commaSep($._type), ")", "->", $._type),
-        type_user: ($) => prec.left(PREC.TYPE, seq(optSeq(dotSep($.identifier), "."), choice("*", $.identifier))),
+        type_user: ($) => prec.left(PREC.TYPE, seq(optSeq(dotSep($.identifier), "."), choice("*", $.identifier), optSeq("<", commaSep($._type), ">"))),
         type_paren: ($) => prec(PREC.PRIMARY, seq("(", $.func_type, ")")),
         type_null: ($) => seq(choice($.type_user, $.type_paren), "?"),
         type_params: ($) => seq("<", commaSep($.type_param), ">"),
@@ -65,7 +67,7 @@ module.exports = grammar({
         annotation: ($) => seq("@", $.identifier),
         // Declaration
         func_decl: ($) => prec.right(seq("fun", optional($.type_params), field("name", $.identifier), $.param_list, optSeq(":", field("return", $._type)), optional($.type_constraints), optional($.func_body))),
-        class_decl: ($) => prec.left(seq("class", optional($.type_params), field("name", $.identifier), optional($.primary_constructor), optSeq(":", field("super", $.identifier)), optional($.type_constraints), choice(endl, $.class_body))),
+        class_decl: ($) => prec.left(seq(optional("data"), "class", optional($.type_params), field("name", $.identifier), optional($.primary_constructor), optSeq(":", field("super", $.identifier)), optional($.type_constraints), choice(endl, $.class_body))),
         object_decl: ($) => prec.right(seq(optional("companion"), "object", optional($.type_params), optional(field("name", $.identifier)))),
         primary_constructor: ($) => seq(optSeq(optional($.modifiers), "constructor"), $.class_params),
         class_params: ($) => seq("(", commaSep($.class_param), ")"),

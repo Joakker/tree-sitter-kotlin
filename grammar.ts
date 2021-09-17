@@ -56,7 +56,8 @@ export = grammar({
           $.block,
           $.for_stmt,
           $.while_stmt,
-          $.do_while
+          $.do_while,
+          $.package_stmt
         )
       ),
     _declaration: ($) =>
@@ -64,6 +65,9 @@ export = grammar({
         optional($.modifiers),
         choice($.func_decl, $.class_decl, $.object_decl, $.property)
       ),
+
+    package_stmt: ($) => seq("package", $.package_path),
+    package_path: ($) => dotSep($.identifier),
 
     // Modifiers
     modifiers: (_) => choice("private", "public"),
@@ -80,7 +84,11 @@ export = grammar({
     type_user: ($) =>
       prec.left(
         PREC.TYPE,
-        seq(optSeq(dotSep($.identifier), "."), choice("*", $.identifier))
+        seq(
+          optSeq(dotSep($.identifier), "."),
+          choice("*", $.identifier),
+          optSeq("<", commaSep($._type), ">")
+        )
       ),
     type_paren: ($) => prec(PREC.PRIMARY, seq("(", $.func_type, ")")),
     type_null: ($) => seq(choice($.type_user, $.type_paren), "?"),
@@ -119,6 +127,7 @@ export = grammar({
     class_decl: ($) =>
       prec.left(
         seq(
+          optional("data"),
           "class",
           optional($.type_params),
           field("name", $.identifier),
