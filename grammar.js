@@ -95,8 +95,9 @@ module.exports = grammar({
         // Block
         block: ($) => seq("{", repeat($.statement), "}"),
         // Expression
-        expression: ($) => choice($._expression, $.lambda),
+        expression: ($) => choice($._expression, $.lambda, $.object_lit),
         _expression: ($) => prec(PREC.PRIMARY, choice($.paren_expr, $.binary_expr, $.try_expr, $.throw_expr, $.return_expr, $.continue_expr, $.break_expr, $.identifier, $.integer, $.float, $.call, $.selector, $.string, "false", "true", "null")),
+        object_lit: ($) => seq("object", optSeq(":", field("super", $.type_user), $.class_body)),
         paren_expr: ($) => seq("(", $._expression, ")"),
         binary_expr: ($) => {
             let binary_expr = [

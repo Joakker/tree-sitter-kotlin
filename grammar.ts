@@ -264,7 +264,7 @@ export = grammar({
     block: ($) => seq("{", repeat($.statement), "}"),
 
     // Expression
-    expression: ($) => choice($._expression, $.lambda),
+    expression: ($) => choice($._expression, $.lambda, $.object_lit),
     _expression: ($) =>
       prec(
         PREC.PRIMARY,
@@ -287,6 +287,9 @@ export = grammar({
           "null"
         )
       ),
+
+    object_lit: ($) =>
+      seq("object", optSeq(":", field("super", $.type_user), $.class_body)),
 
     paren_expr: ($) => seq("(", $._expression, ")"),
 

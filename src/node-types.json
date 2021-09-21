@@ -66,6 +66,10 @@
           "named": true
         },
         {
+          "type": "object_lit",
+          "named": true
+        },
+        {
           "type": "paren_expr",
           "named": true
         },
@@ -760,6 +764,10 @@
             "named": false
           },
           {
+            "type": "object_lit",
+            "named": true
+          },
+          {
             "type": "paren_expr",
             "named": true
           },
@@ -905,6 +913,10 @@
           "named": true
         },
         {
+          "type": "object_lit",
+          "named": true
+        },
+        {
           "type": "paren_expr",
           "named": true
         },
@@ -978,6 +990,10 @@
           {
             "type": "null",
             "named": false
+          },
+          {
+            "type": "object_lit",
+            "named": true
           },
           {
             "type": "paren_expr",
@@ -1266,6 +1282,10 @@
           "named": true
         },
         {
+          "type": "object_lit",
+          "named": true
+        },
+        {
           "type": "package_stmt",
           "named": true
         },
@@ -1386,6 +1406,10 @@
         },
         {
           "type": "object_decl",
+          "named": true
+        },
+        {
+          "type": "object_lit",
           "named": true
         },
         {
@@ -1742,6 +1766,32 @@
     }
   },
   {
+    "type": "object_lit",
+    "named": true,
+    "fields": {
+      "super": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "type_user",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "class_body",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "package_path",
     "named": true,
     "fields": {},
@@ -2080,6 +2130,10 @@
           "named": true
         },
         {
+          "type": "object_lit",
+          "named": true
+        },
+        {
           "type": "paren_expr",
           "named": true
         },
@@ -2163,6 +2217,10 @@
         },
         {
           "type": "lambda",
+          "named": true
+        },
+        {
+          "type": "object_lit",
           "named": true
         },
         {
@@ -2475,6 +2533,10 @@
         },
         {
           "type": "lambda",
+          "named": true
+        },
+        {
+          "type": "object_lit",
           "named": true
         },
         {
@@ -2820,6 +2882,10 @@
           {
             "type": "null",
             "named": false
+          },
+          {
+            "type": "object_lit",
+            "named": true
           },
           {
             "type": "paren_expr",
